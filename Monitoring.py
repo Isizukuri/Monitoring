@@ -31,7 +31,7 @@ rows = res_table.findAll('tr')[1:]
 rel_links = [ row.find('td').a['href'] for row in rows ]
 
 path = ('./'+start_date+'-'+end_date)
-#mkdir(path)
+mkdir(path)
 chdir(path)
 
 for link in rel_links:
