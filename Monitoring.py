@@ -9,6 +9,7 @@ from os.path import isfile
 import requests
 from BeautifulSoup import BeautifulSoup as BS
 from urlparse import urljoin
+from docx import Document
 
 #search_word = raw_input('Введіть фрагмент тексту судового рішення: ')
 #start_date = raw_input('Введіть початок періоду пошуку (дд.мм.рррр): ')
@@ -18,97 +19,65 @@ search_word = 'прокуратура'
 start_date = '01.02.2015'
 end_date = '28.02.2015'
 
-url = 'http://www.reyestr.court.gov.ua/'
-data = {'SearchExpression': search_word,
+
+class inputs(object):
+    '''Description'''
+    def __init__(self, start_date, end_date, search_word = ''):
+        self.url = 'http://www.reyestr.court.gov.ua/'
+        self.search_word = search_word
+        self.start_date = start_date
+        self.end_date = end_date
+        self.data = {'SearchExpression': self.search_word,
         'CourtRegion[]':'18',
         'CourtName[]':'166',
-        'RegDateBegin': start_date,
-        'RegDateEnd': end_date,
-        'CSType[]':'1',
-        'PagingInfo.ItemsPerPage':'100',
+        'RegDateBegin': self.start_date,
+        'RegDateEnd': self.end_date,
+        'CSType[]': '2',
+        'PagingInfo.ItemsPerPage':'25',
         'Liga':'false'}
+        self.requisites = {'texts':[],'case_numbers':[], 'forms':[], 'dates': [], 'court_names': []}
 
-response = requests.post(url, data)
-if response.status_code != 200:
-    raise RuntimeError('Got unexpected response', response)
-
-soup = BS(response.text)
-res_table = soup.find('table', id='tableresult')
-rows = res_table.findAll('tr')[1:]
-rel_links = [ row.find('td').a['href'] for row in rows ]
-
-
-path = ('./'+start_date+'-'+end_date)
-
-if not isdir(path):
-    mkdir(path)
-chdir(path)
-
-for link in rel_links:
-    if not isfile(link[9:]+'.html'): 
-        time.sleep(2)
-        child_page = BS(requests.get(urljoin(url, link)).text)
-        text = child_page.body.find('textarea', id='txtdepository').string
-        path = ('./'+start_date+'-'+end_date)
-        with open(link[9:]+'.html', 'w') as f:
-            f.write(text.encode('utf-8'))
-
-def CaseNumbers(rows):
-    u"""Бере рядки таблиці з результатами пошуку та повертає список номерів справ"""
-    def GetCaseNum(rows):
-        i=0
-        case_numbers = []
-        for row in rows:
-            i+=1
-            case_numbers.append(row.find('td', {"class" : "CaseNumber tr"+str(i)}))
-        return case_numbers
-
-    def GiveCaseNumbers(GetCaseNum):
-        case_number=[]
-        for num in GetCaseNum:
-            nm = str(BS(num.text))
-            case_number.append(nm)
-
-        for num in case_number:
-            num = num.decode('utf-8')
-            
-        return case_number
-
-    temp_list = GetCaseNum(rows)
-
-    return GiveCaseNumbers(temp_list)
-
-def Forms(rows):
-    u"""Бере рядки таблиці з результатами пошуку та повертає список форм судочинства"""
-    def GetForms(rows):
-        i=0
-        form_list = []
-        for row in rows:
-            i+=1
-            form_list.append(row.find('td', {"class" : "CSType tr"+str(i)}))
-        return form_list
-
-    def GiveForms(GetForms):
-        form_list=[]
-
-        for form in GetForms:
-            nm = (str(BS(form.text)))
-            form_list.append(nm)
+    def __call__(self):    
+        self.response = requests.post(self.url, self.data)
+        if self.response.status_code != 200:
+            raise RuntimeError('Got unexpected response', response)
+        print 'response success'
         
-        for form in form_list:
-            form = form.decode('utf-8')
+        self.soup = BS(self.response.text)
+        self.res_table = self.soup.find('table', id='tableresult')
+        self.rows = self.res_table.findAll('tr')[1:]
+        self.rel_links = [ row.find('td').a['href'] for row in self.rows ]
 
-        return form_list
-    temp_list = GetForms(rows)
-
-    return GiveForms(temp_list)
-
-
-
-
-
+                
+    #def savetofile(self):
+        #if not isdir(self.path):
+            #mkdir(self.path)
+        #chdir(self.path)
+        #self.path = ('./'+self.start_date+'-'+self.end_date)
+        #Not Implemented
 
 
 
+    def getall(self):
+        u"""Description"""
+        self.child_page = ''
+        self.text = ''
+        for link in self.rel_links:
+            time.sleep(10)
+            self.child_page = BS(requests.get(urljoin(self.url, link)).text)
+            self.requisites['texts'].append(self.child_page.body.find('textarea', id='txtdepository').string)
+        print 'Getall works'
+        
+        self.i=0
+        for row in self.rows:
+                self.i+=1
+                self.requisites['case_numbers'].append(row.find('td', {"class" : "CaseNumber tr"+str(self.i)}))
+                self.requisites['forms'].append(row.find('td', {"class" : "CSType tr"+str(self.i)}))
+                self.requisites['dates'].append(row.find('td', {"class" : "RegDate tr"+str(self.i)}))
+                self.requisites['court_names'].append(row.find('td', {"class" : "CourtName tr"+str(self.i)}))
+        self.requisites['case_numbers'] = [str(BS(case_number.text)).decode('utf-8') for case_number in self.requisites['case_numbers']]
+        self.requisites['forms'] = [str(BS(form.text)).decode('utf-8') for form in self.requisites['forms']]
+        self.requisites['dates'] = [str(BS(date.text)).decode('utf-8') for date in self.requisites['dates']]
+        self.requisites['court_names'] = [str(BS(court_name.text)).decode('utf-8') for court_name in self.requisites['court_names']]        
 
 
