@@ -48,7 +48,7 @@ class inputs(object):
         self.rows = self.res_table.findAll('tr')[1:]
         self.rel_links = [ row.find('td').a['href'] for row in self.rows ]
 
-                
+                      
     #def savetofile(self):
         #if not isdir(self.path):
             #mkdir(self.path)
@@ -68,13 +68,16 @@ class inputs(object):
             self.requisites['texts'].append(self.child_page.body.find('textarea', id='txtdepository').string)
         print 'Getall works'
         
-        self.i=0
+        self.i=1
         for row in self.rows:
-                self.i+=1
                 self.requisites['case_numbers'].append(row.find('td', {"class" : "CaseNumber tr"+str(self.i)}))
                 self.requisites['forms'].append(row.find('td', {"class" : "CSType tr"+str(self.i)}))
                 self.requisites['dates'].append(row.find('td', {"class" : "RegDate tr"+str(self.i)}))
                 self.requisites['court_names'].append(row.find('td', {"class" : "CourtName tr"+str(self.i)}))
+                if self.i == 1:
+                    self.i+=1
+                else:
+                    self.i = 1
         self.requisites['case_numbers'] = [str(BS(case_number.text)).decode('utf-8') for case_number in self.requisites['case_numbers']]
         self.requisites['forms'] = [str(BS(form.text)).decode('utf-8') for form in self.requisites['forms']]
         self.requisites['dates'] = [str(BS(date.text)).decode('utf-8') for date in self.requisites['dates']]
