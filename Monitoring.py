@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import time
 from os import mkdir
 from os import chdir
@@ -10,6 +7,10 @@ import requests
 from BeautifulSoup import BeautifulSoup as BS
 from urlparse import urljoin
 from docx import Document
+from docx.enum.style import WD_STYLE_TYPE
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt
+
 
 #search_word = raw_input('Введіть фрагмент тексту судового рішення: ')
 #start_date = raw_input('Введіть початок періоду пошуку (дд.мм.рррр): ')
@@ -63,24 +64,45 @@ class inputs(object):
         self.child_page = ''
         self.text = ''
         for link in self.rel_links:
-            time.sleep(10)
+            time.sleep(5)
             self.child_page = BS(requests.get(urljoin(self.url, link)).text)
-            self.requisites['texts'].append(self.child_page.body.find('textarea', id='txtdepository').string)
+            self.requisites['texts'].append((self.child_page.body.find('textarea', id='txtdepository')).text)
         print 'Getall works'
         
         self.i=1
         for row in self.rows:
-                self.requisites['case_numbers'].append(row.find('td', {"class" : "CaseNumber tr"+str(self.i)}))
-                self.requisites['forms'].append(row.find('td', {"class" : "CSType tr"+str(self.i)}))
-                self.requisites['dates'].append(row.find('td', {"class" : "RegDate tr"+str(self.i)}))
-                self.requisites['court_names'].append(row.find('td', {"class" : "CourtName tr"+str(self.i)}))
+                self.requisites['case_numbers'].append(row.find('td', {"class" : "CaseNumber tr"+str(self.i)}).text)
+                self.requisites['forms'].append(row.find('td', {"class" : "CSType tr"+str(self.i)}).text)
+                self.requisites['dates'].append(row.find('td', {"class" : "RegDate tr"+str(self.i)}).text)
+                self.requisites['court_names'].append(row.find('td', {"class" : "CourtName tr"+str(self.i)}).text)
                 if self.i == 1:
                     self.i+=1
                 else:
                     self.i = 1
-        self.requisites['case_numbers'] = [str(BS(case_number.text)).decode('utf-8') for case_number in self.requisites['case_numbers']]
-        self.requisites['forms'] = [str(BS(form.text)).decode('utf-8') for form in self.requisites['forms']]
-        self.requisites['dates'] = [str(BS(date.text)).decode('utf-8') for date in self.requisites['dates']]
-        self.requisites['court_names'] = [str(BS(court_name.text)).decode('utf-8') for court_name in self.requisites['court_names']]        
+        return self.requisites
+
+def outputs(requisites=None):
+    dovidka = Document()
+    plain = dovidka.styles.add_style('Plain Text', WD_STYLE_TYPE.PARAGRAPH)
+    plain.font.name = 'Times New Roman'
+    plain.font.size = Pt(14)
+
+    bold = dovidka.styles.add_style('Bold Text', WD_STYLE_TYPE.PARAGRAPH)
+    bold.font.name = 'Times New Roman'
+    bold.font.size = Pt(14)
+    
+    heading1 = dovidka.add_paragraph('ДОВІДКА', style = 'Bold Text')
+    heading1.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    heading2 = dovidka.add_paragraph('про результати моніторингу судових рішень',
+                                    style = 'Bold Text')
+    heading2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+
+    dovidka.save('dovidka.docx')
+    
+        
+        
+
+        
 
 
