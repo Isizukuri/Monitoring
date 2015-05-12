@@ -16,6 +16,7 @@ from docx.shared import Cm
 
 
 #user_name = raw_input('Введіть ваше прізвище та ініціали у форматі Прізвище І.П. :')
+#user_place = raw_input('Введіть вашу посаду :')
 #search_word = raw_input('Введіть фрагмент тексту судового рішення: ')
 #start_date = raw_input('Введіть початок періоду пошуку (дд.мм.рррр): ')
 #end_date = raw_input('Введіть кінець періоду пошуку (дд.мм.рррр): ')
@@ -23,7 +24,10 @@ from docx.shared import Cm
 search_word = 'прокуратура'
 start_date = '01.02.2015'
 end_date = '28.02.2015'
-user_name = 'Маринич В.В'
+user_name = '\n'+'\n'+'Маринич В.В'
+user_place = """Прокурор відділу захисту прав
+і свобод дітей
+прокуратури Рівненської області"""
 
 class inputs(object):
     '''Description'''
@@ -126,8 +130,9 @@ def outputs(requisites=None):
     heading1 = dovidka.add_paragraph(headtext.decode('utf-8'), style = 'Bold Text')
     heading1.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    text_before_table = """          Мною, прокурором відділу захисту прав і свобод дітей прокуратури області """+user_name+""" вивчено законність наступних судових рішень,                        занесених до Єдиного державного реєстру судових рішень,
-відібраних за датою з """+start_date+' по '+end_date+':'
+    text_before_table = "          Мною, прокурором відділу захисту прав і свобод дітей прокуратури області "+user_name+ \
+    " вивчено законність наступних судових рішень, занесених до Єдиного державного реєстру судових рішень, "\
+    "відібраних за датою з "+start_date+' по '+end_date+':'
     
     paragraph1 = dovidka.add_paragraph(text_before_table.decode('utf-8'), style = 'Plain Text')
     paragraph1.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
@@ -136,12 +141,16 @@ def outputs(requisites=None):
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table_heading = table.rows[0]
 
-    head_cell1 = table_heading.cells[0].add_paragraph('№ справи, дата рішення, суд'.decode('utf-8'), style = 'Table Bold Text')
-    head_cell2 = table_heading.cells[1].add_paragraph('Сторони'.decode('utf-8'), style = 'Table Bold Text')
-    head_cell3 = table_heading.cells[2].add_paragraph('Суть спору'.decode('utf-8'), style = 'Table Bold Text')
+    head_cell1 = table_heading.cells[0].add_paragraph('№ справи, дата рішення, суд'.decode('utf-8'),
+                                                      style = 'Table Bold Text')
+    head_cell2 = table_heading.cells[1].add_paragraph('Сторони'.decode('utf-8'),
+                                                      style = 'Table Bold Text')
+    head_cell3 = table_heading.cells[2].add_paragraph('Суть спору'.decode('utf-8'),
+                                                      style = 'Table Bold Text')
     head_cell4 = table_heading.cells[3].add_paragraph('Ціна позову, площа земель, інші дані, які характеризують правовідносини'.decode('utf-8'),
                                                       style = 'Table Bold Text')
-    head_cell5 = table_heading.cells[4].add_paragraph('Вжиті заходи або висновок про законність'.decode('utf-8'), style = 'Table Bold Text')
+    head_cell5 = table_heading.cells[4].add_paragraph('Вжиті заходи або висновок про законність'.decode('utf-8'),
+                                                      style = 'Table Bold Text')
 
     for i in range(len(requisites['forms'])):
         table.add_row()
@@ -155,6 +164,23 @@ def outputs(requisites=None):
                                             requisites['court_names'][work_rows.index(row)]),
                                            style = 'Table Plain Text')
         
+    text_after_table = "          За результатами моніторингу Єдиного державного реєстру "\
+    "судових рішень за вказаний період незаконних судових рішень у цивільних"\
+    " справах з питань захисту прав дітей (про позбавлення батьківських прав, "\
+    "відібрання дитини без позбавлення батьківських прав, усиновлення дітей іноземними "\
+    "громадянами тощо), а також у господарських справах з питань захисту інтересів держави "\
+    "у сфері охорони дитинства, винесених без участі прокурорів, не виявлено."
+
+    paragraph2 = dovidka.add_paragraph(text_after_table.decode('utf-8'), style = 'Plain Text')
+    paragraph2.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+
+    signment = dovidka.add_table(rows=1, cols = 2)
+    sign_prefix = signment.rows[0].cells[0].add_paragraph(user_place.decode('utf-8'), style = 'Bold Text')
+    sign_prefix.alignment = WD_ALIGN_PARAGRAPH.LEFT
+
+    sign_end = signment.rows[0].cells[1].add_paragraph(user_name.decode('utf-8'), style = 'Bold Text')
+    sign_end.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+
     dovidka.save('dovidka.docx')
     
         
