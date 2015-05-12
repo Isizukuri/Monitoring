@@ -9,9 +9,13 @@ from urlparse import urljoin
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_LINE_SPACING
+from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.shared import Pt
+from docx.shared import Cm
 
 
+#user_name = raw_input('Введіть ваше прізвище та ініціали у форматі Прізвище І.П. :')
 #search_word = raw_input('Введіть фрагмент тексту судового рішення: ')
 #start_date = raw_input('Введіть початок періоду пошуку (дд.мм.рррр): ')
 #end_date = raw_input('Введіть кінець періоду пошуку (дд.мм.рррр): ')
@@ -19,7 +23,7 @@ from docx.shared import Pt
 search_word = 'прокуратура'
 start_date = '01.02.2015'
 end_date = '28.02.2015'
-
+user_name = 'Маринич В.В'
 
 class inputs(object):
     '''Description'''
@@ -83,21 +87,74 @@ class inputs(object):
 
 def outputs(requisites=None):
     dovidka = Document()
+
+    global start_date
+    global end_date
+    global user_name
+
+    section = dovidka.sections[-1]
+    section.left_margin = Cm(3)
+    section.right_margin = Cm(1)
+    section.top_margin = Cm(2)
+    section.bottom_margin = Cm(2)
+
     plain = dovidka.styles.add_style('Plain Text', WD_STYLE_TYPE.PARAGRAPH)
     plain.font.name = 'Times New Roman'
     plain.font.size = Pt(14)
 
+    t_plain = dovidka.styles.add_style('Table Plain Text', WD_STYLE_TYPE.PARAGRAPH)
+    t_plain.font.name = 'Times New Roman'
+    t_plain.font.size = Pt(12)    
+
     bold = dovidka.styles.add_style('Bold Text', WD_STYLE_TYPE.PARAGRAPH)
     bold.font.name = 'Times New Roman'
     bold.font.size = Pt(14)
-    
-    heading1 = dovidka.add_paragraph('ДОВІДКА', style = 'Bold Text')
-    heading1.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    heading2 = dovidka.add_paragraph('про результати моніторингу судових рішень',
-                                    style = 'Bold Text')
-    heading2.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    
+    bold.font.bold = True
 
+    t_bold = dovidka.styles.add_style('Table Bold Text', WD_STYLE_TYPE.PARAGRAPH)
+    t_bold.font.name = 'Times New Roman'
+    t_bold.font.size = Pt(12)
+    t_bold.font.bold = True
+
+   
+    
+    headtext = """ДОВІДКА
+про вивчення судових рішень
+Рівненського апеляційного господарського суду
+та апеляційного суду Рівненської області
+за період з """+start_date+' по '+end_date+"\n"
+    heading1 = dovidka.add_paragraph(headtext.decode('utf-8'), style = 'Bold Text')
+    heading1.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    text_before_table = """          Мною, прокурором відділу захисту прав і свобод дітей прокуратури області """+user_name+""" вивчено законність наступних судових рішень,                        занесених до Єдиного державного реєстру судових рішень,
+відібраних за датою з """+start_date+' по '+end_date+':'
+    
+    paragraph1 = dovidka.add_paragraph(text_before_table.decode('utf-8'), style = 'Plain Text')
+    paragraph1.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+
+    table = dovidka.add_table(rows=1, cols=5, style = 'Table Grid')
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table_heading = table.rows[0]
+
+    head_cell1 = table_heading.cells[0].add_paragraph('№ справи, дата рішення, суд'.decode('utf-8'), style = 'Table Bold Text')
+    head_cell2 = table_heading.cells[1].add_paragraph('Сторони'.decode('utf-8'), style = 'Table Bold Text')
+    head_cell3 = table_heading.cells[2].add_paragraph('Суть спору'.decode('utf-8'), style = 'Table Bold Text')
+    head_cell4 = table_heading.cells[3].add_paragraph('Ціна позову, площа земель, інші дані, які характеризують правовідносини'.decode('utf-8'),
+                                                      style = 'Table Bold Text')
+    head_cell5 = table_heading.cells[4].add_paragraph('Вжиті заходи або висновок про законність'.decode('utf-8'), style = 'Table Bold Text')
+
+    for i in range(len(requisites['forms'])):
+        table.add_row()
+
+    work_rows = table.rows[1:]
+
+    for row in work_rows:
+        cell = row.cells[0]
+        cell_contents = cell.add_paragraph((requisites['case_numbers'][work_rows.index(row)]+', ',
+                                            requisites['dates'][work_rows.index(row)]+', ',
+                                            requisites['court_names'][work_rows.index(row)]),
+                                           style = 'Table Plain Text')
+        
     dovidka.save('dovidka.docx')
     
         
