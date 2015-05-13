@@ -1,19 +1,16 @@
-# coding=utf-8
 import time
-from os import mkdir
-from os import chdir
-from os.path import isdir
-from os.path import isfile
+from os import mkdir, chdir
+from os.path import isdir, isfile
+
 import requests
 from BeautifulSoup import BeautifulSoup as BS
 from urlparse import urljoin
+
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.shared import Pt
-from docx.shared import Cm
-
+from docx.shared import Pt, Cm
 
 # user_name = raw_input('Введіть ваше прізвище та ініціали у форматі Прізвище І. П. через пробіли :')
 # user_place = raw_input('Введіть вашу посаду :')
@@ -21,18 +18,24 @@ from docx.shared import Cm
 #start_date = raw_input('Введіть початок періоду пошуку (дд.мм.рррр): ')
 #end_date = raw_input('Введіть кінець періоду пошуку (дд.мм.рррр): ')
 
-search_word = 'прокуратура'
+search_word = unicode('прокуратура', 'utf-8')
 start_date = '01.02.2015'
 end_date = '28.02.2015'
-user_name = 'Маринич В. В.'
-user_place = 'Прокурор відділу захисту прав і свобод дітей ' \
-             'прокуратури Рівненської області'
+user_name = unicode('Маринич В. В.', 'utf-8')
+user_place = unicode('прокурор відділу захисту прав і свобод дітей ' \
+             'прокуратури Рівненської області', 'utf-8')
 
 
-class inputs(object):
+class Inputs(object):
     '''Description'''
 
     def __init__(self, start_date, end_date, search_word=''):
+        """
+
+        :param Start date of the search perios:
+        :param End date of the search period:
+        :param Key word(s):
+        """
         self.url = 'http://www.reyestr.court.gov.ua/'
         self.search_word = search_word
         self.start_date = start_date
@@ -48,6 +51,11 @@ class inputs(object):
         self.requisites = {'texts': [], 'case_numbers': [], 'forms': [], 'dates': [], 'court_names': []}
 
     def __call__(self):
+        """
+
+
+        :raise RuntimeError: When the EDRSR is not avalaible
+        """
         self.response = requests.post(self.url, self.data)
         if self.response.status_code != 200:
             raise RuntimeError('Got unexpected response', self.response)
@@ -58,7 +66,6 @@ class inputs(object):
         self.rows = self.res_table.findAll('tr')[1:]
         self.rel_links = [row.find('td').a['href'] for row in self.rows]
 
-
         #def savetofile(self):
         #if not isdir(self.path):
         #mkdir(self.path)
@@ -66,8 +73,7 @@ class inputs(object):
         #self.path = ('./'+self.start_date+'-'+self.end_date)
         #Not Implemented
 
-
-    def getall(self):
+    def getAll(self):
         u"""Description"""
         self.child_page = ''
         self.text = ''
@@ -91,6 +97,10 @@ class inputs(object):
 
 
 def outputs(requisites=None):
+    """
+
+    :param requisites: Take this from inputs.getAll()
+    """
     dovidka = Document()
 
     global start_date
@@ -131,10 +141,10 @@ def outputs(requisites=None):
     heading1 = dovidka.add_paragraph(headtext.decode('utf-8'), style='Bold Text')
     heading1.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    text_before_table = '          Мною, прокурором відділу захисту прав і свобод дітей прокуратури області ' + uname[
-        0] + ' ' + uname[1] + uname[2] + \
-                        ' вивчено законність наступних судових рішень, занесених до Єдиного державного реєстру судових рішень, ' \
-                        'відібраних за датою з ' + start_date + ' по ' + end_date + ':'
+    text_before_table = ('          Мною, прокурором відділу захисту прав і свобод дітей прокуратури області ' +
+                         uname[0] + ' ' + uname[1] + uname[2] +
+                        ' вивчено законність наступних судових рішень, занесених до Єдиного державного реєстру судових рішень, '+
+                        'відібраних за датою з ' + start_date + ' по ' + end_date + ':')
 
     paragraph1 = dovidka.add_paragraph(text_before_table.decode('utf-8'), style='Plain Text')
     paragraph1.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
@@ -143,16 +153,16 @@ def outputs(requisites=None):
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table_heading = table.rows[0]
 
-    head_cell1 = table_heading.cells[0].add_paragraph('№ справи, дата рішення, суд'.decode('utf-8'),
+    head_cell1 = table_heading.cells[0].add_paragraph(unicode('№ справи, дата рішення, суд', 'utf-8'),
                                                       style='Table Bold Text')
-    head_cell2 = table_heading.cells[1].add_paragraph('Сторони'.decode('utf-8'),
+    head_cell2 = table_heading.cells[1].add_paragraph(unicode('Сторони', 'utf-8'),
                                                       style='Table Bold Text')
-    head_cell3 = table_heading.cells[2].add_paragraph('Суть спору'.decode('utf-8'),
+    head_cell3 = table_heading.cells[2].add_paragraph(unicode('Суть спору', 'utf-8'),
                                                       style='Table Bold Text')
-    head_cell4 = table_heading.cells[3].add_paragraph(
-        "Ціна позову, площа земель, інші дані, які характеризують правовідносини".decode('utf-8'),
+    head_cell4 = table_heading.cells[3].add_paragraph(unicode(
+        "Ціна позову, площа земель, інші дані, які характеризують правовідносини", 'utf-8'),
         style="Table Bold Text")
-    head_cell5 = table_heading.cells[4].add_paragraph("Вжиті заходи або висновок про законність".decode('utf-8'),
+    head_cell5 = table_heading.cells[4].add_paragraph(unicode("Вжиті заходи або висновок про законність", 'utf-8'),
                                                       style="Table Bold Text")
 
     for i in range(len(requisites['forms'])):
@@ -180,13 +190,12 @@ def outputs(requisites=None):
     signment = dovidka.add_table(rows=1, cols=2)
     signment.columns[0].width = Cm(12.5)
     signment.columns[1].width = Cm(5.4)
-    sign_prefix = signment.rows[0].cells[0].add_paragraph(user_place.decode('utf-8'), style='Bold Text')
+    sign_prefix = signment.rows[0].cells[0].add_paragraph(user_place.capitalize(), style='Bold Text')
     sign_prefix.alignment = WD_ALIGN_PARAGRAPH.LEFT
 
     sign_end = signment.rows[0].cells[1].add_paragraph(('\n' + '\n' + uname[1] + ' ' + uname[0]).decode('utf-8'),
                                                        style='Bold Text')
     sign_end.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-
 
     dovidka.save('dovidka.docx')
     
